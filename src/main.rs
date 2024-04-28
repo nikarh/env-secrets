@@ -125,7 +125,9 @@ fn app() -> anyhow::Result<()> {
                 .map(|(_, _, item)| item)
                 .collect::<Vec<_>>();
 
-            ss.unlock_all(&locked)?;
+            if !locked.is_empty() {
+                ss.unlock_all(&locked)?;
+            }
 
             for (_, env, item) in &items {
                 let secret = String::from_utf8(item.get_secret()?)?;
@@ -150,7 +152,9 @@ fn app() -> anyhow::Result<()> {
                 .map(|(_, _, item)| item)
                 .collect::<Vec<_>>();
 
-            ss.unlock_all(&locked)?;
+            if !locked.is_empty() {
+                ss.unlock_all(&locked)?;
+            }
 
             let exe = env::current_exe()?;
             let exe = exe
