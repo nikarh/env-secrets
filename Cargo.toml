@@ -1,0 +1,35 @@
+[package]
+name = "env-secrets"
+version = "0.0.1"
+edition = "2021"
+
+authors = ["Nikolay Arhipov <n@arhipov.net>"]
+keywords = ["environment", "secrets", "secret-service", "password", "keychain"]
+description = "A CLI tool to set env variables from a keyring"
+homepage = "https://github.com/nikarh/env-secrets.git"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/nikarh/env-secrets.git"
+
+[dependencies]
+anyhow = "1.0.82"
+clap = { version = "4.5.4", features = ["derive"] }
+rpassword = "7.3.1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+secret-service = { version = "3", git = "https://github.com/nikarh/secret-service-rs", rev = "2d7600e6230377f2f527184ea0e8e3e641feb615", features = [
+    "rt-tokio-crypto-openssl",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = { version = "2.6" }
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+similar_names = "allow"
+
+[profile.release]
+codegen-units = 1
+opt-level = 3
+lto = "fat"
+strip = "symbols"
+panic = "abort"
