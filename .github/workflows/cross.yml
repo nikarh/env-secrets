@@ -1,11 +1,7 @@
-name: Publish
-
-permissions:
-  contents: write
+name: PR cross-compile
 
 on:
-  release:
-    types: [published]
+  pull_request:
 
 defaults:
   run:
@@ -51,3 +47,4 @@ jobs:
           tar: all
           archive: env-secrets-$target-$tag
           token: ${{ secrets.GITHUB_TOKEN }}
+          dry-run: true

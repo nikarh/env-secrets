@@ -145,12 +145,11 @@ mod app {
 
 #[cfg(target_os = "linux")]
 mod app {
-    use std::{collections::HashMap, env, ops::Deref};
+    use std::{collections::HashMap, env};
 
-    use anyhow::bail;
     use clap::Parser;
     use rpassword::prompt_password;
-    use secret_service::blocking;
+    use secret_service::blocking::{Item, SecretService};
 
     use crate::{validate_keys, App, Cmd};
 
