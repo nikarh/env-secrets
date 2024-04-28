@@ -28,7 +28,6 @@ pedantic = { level = "deny", priority = -1 }
 similar_names = "allow"
 
 [profile.release]
-codegen-units = 1
 opt-level = 3
 lto = "fat"
 strip = "symbols"
