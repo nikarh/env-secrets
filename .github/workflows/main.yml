@@ -9,7 +9,12 @@ on:
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+          - os: macos-14
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +33,12 @@ jobs:
         run: cargo test
   build:
     name: Build artifact
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+          - os: macos-14
     needs: [check]
     steps:
       - name: Checkout
