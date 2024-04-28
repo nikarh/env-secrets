@@ -9,14 +9,17 @@ struct App {
     #[command(subcommand)]
     pub cmd: Cmd,
 
-    #[arg(alias = "n")]
+    /// Namespace for the environment. Used to logically group secrets, like `project1/prod` and `project1/dev`.
+    /// Defaults to the current directory name.
     pub namespace: Option<String>,
 }
 
 #[derive(Args, Debug)]
 pub struct Set {
+    /// Environment variable name
     pub key: String,
 
+    /// Secret value
     #[arg(long, short = 'v')]
     pub value: Option<String>,
 }
@@ -28,6 +31,7 @@ pub struct Get {
 
 #[derive(Args, Debug)]
 pub struct Env {
+    /// Environment variables to export
     pub keys: Vec<String>,
 }
 

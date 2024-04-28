@@ -32,23 +32,43 @@ jobs:
       - name: "`cargo test`"
         run: cargo test
   build:
-    name: Build artifact
+    needs: [check]
+    name: Build for ${{ matrix.target }}
+    if: github.repository_owner == 'nikarh'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-          - os: macos-14
-    needs: [check]
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-22.04
+          - target: x86_64-apple-darwin
+            os: macos-14
+          - target: aarch64-apple-darwin
+            os: macos-14
+    timeout-minutes: 60
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
-      - name: rust-toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Build
-        run: cargo build --release
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - uses: taiki-e/setup-cross-toolchain-action@v1
         with:
-          name: binary
-          path: target/release/env-secrets
+          target: ${{ matrix.target }}
+        if: startsWith(matrix.os, 'ubuntu') && !contains(matrix.target, '-musl')
+      - uses: taiki-e/install-action@cross
+        if: contains(matrix.target, '-musl')
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: env-secrets
+          include: LICENSE-MIT,LICENSE-APACHE,CHANGELOG.md,README.md
+          target: ${{ matrix.target }}
+          tar: all
+          archive: env-secrets-$target-$tag
+          token: ${{ secrets.GITHUB_TOKEN }}
+          dry-run: true
