@@ -17,7 +17,7 @@ rpassword = "7.3.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 secret-service = { version = "3", git = "https://github.com/nikarh/secret-service-rs", rev = "2d7600e6230377f2f527184ea0e8e3e641feb615", features = [
-    "rt-tokio-crypto-openssl",
+    "rt-tokio-crypto-rust",
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
