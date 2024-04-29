@@ -4,7 +4,7 @@ use anyhow::bail;
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[command(about)]
+#[command(about, version)]
 struct App {
     #[command(subcommand)]
     pub cmd: Cmd,
