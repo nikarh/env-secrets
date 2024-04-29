@@ -31,8 +31,19 @@ pub struct Get {
 
 #[derive(Args, Debug)]
 pub struct Env {
-    /// Environment variables to export
+    /// Environment variables to export. If no keys provided, all the secrets in the namespace will be exported.
     pub keys: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct Run {
+    /// The command to run and its arguments.
+    ///
+    /// All arguments after the `run` keyword or the first `--` option will be passed run unmodified.
+    #[arg(trailing_var_arg = true)]
+    #[arg(allow_hyphen_values = true)]
+    #[arg(global = true)]
+    command: Vec<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -43,6 +54,8 @@ enum Cmd {
     Get(Get),
     /// Read a set of secrets from the keystore and print `export ENV_NAME=secret_value` lines to stdout
     Env(Env),
+    /// Run a command and pass the environment of the sub process with all secrets of the namespace
+    Run(Run),
     /// Export all secrets in the namespace as `env-secrets set` commands
     Export,
 }
@@ -69,7 +82,7 @@ impl App {
 
 #[cfg(target_os = "macos")]
 mod app {
-    use std::{collections::HashMap, env};
+    use std::{collections::HashMap, env, process::Stdio};
 
     use clap::Parser;
     use rpassword::prompt_password;
@@ -129,11 +142,26 @@ mod app {
                 validate_keys(&env.keys)?;
 
                 for (key, secret) in &kc {
-                    if env.keys.contains(key) {
+                    if env.keys.is_empty() || env.keys.contains(key) {
                         let secret = secret.replace('\'', "'\''");
                         println!("export {key}='{secret}'");
                     }
                 }
+            }
+            Cmd::Run(run) => {
+                let command = run
+                    .command
+                    .first()
+                    .ok_or(anyhow::anyhow!("No command provided"))?;
+
+                let mut command = std::process::Command::new(command);
+                command
+                    .args(&run.command[1..])
+                    .envs(kc)
+                    .stdout(Stdio::inherit())
+                    .stdout(Stdio::inherit());
+
+                std::process::exit(command.spawn()?.wait()?.code().unwrap_or(1))
             }
             Cmd::Export => {
                 for (key, secret) in &kc {
@@ -149,8 +177,9 @@ mod app {
 
 #[cfg(target_os = "linux")]
 mod app {
-    use std::{collections::HashMap, env};
+    use std::{collections::HashMap, env, process::Stdio};
 
+    use anyhow::Context;
     use clap::Parser;
     use rpassword::prompt_password;
     use secret_service::blocking::{Item, SecretService};
@@ -206,61 +235,42 @@ mod app {
             Cmd::Env(env) => {
                 validate_keys(&env.keys)?;
 
-                let found = ss.search_items(HashMap::from([
-                    ("app", "env-secrets"),
-                    ("namespace", &namespace),
-                ]))?;
+                let secrets = get_secrets(&ss, &namespace, &|key: &String| {
+                    env.keys.is_empty() || env.keys.contains(key)
+                })?;
 
-                let mut items = vec![];
-
-                let filter = |key: &String| env.keys.contains(key);
-                collect_items(&mut items, found.locked, filter, true)?;
-                collect_items(&mut items, found.unlocked, filter, false)?;
-
-                let locked = items
-                    .iter()
-                    .filter(|(locked, _, _)| *locked)
-                    .map(|(_, _, item)| item)
-                    .collect::<Vec<_>>();
-
-                if !locked.is_empty() {
-                    ss.unlock_all(&locked)?;
-                }
-
-                for (_, env, item) in &items {
-                    let secret = String::from_utf8(item.get_secret()?)?;
+                for (env, secret) in secrets {
                     let secret = secret.replace('\'', "'\''");
 
                     println!("export {env}='{secret}'");
                 }
             }
+            Cmd::Run(run) => {
+                let command = run
+                    .command
+                    .first()
+                    .ok_or(anyhow::anyhow!("No command provided"))?;
+
+                let secrets = get_secrets(&ss, &namespace, &|_| true)?;
+
+                let mut command = std::process::Command::new(command);
+                command
+                    .args(&run.command[1..])
+                    .envs(secrets)
+                    .stdout(Stdio::inherit())
+                    .stdout(Stdio::inherit());
+
+                std::process::exit(command.spawn()?.wait()?.code().unwrap_or(1))
+            }
             Cmd::Export => {
-                let found = ss.search_items(HashMap::from([
-                    ("app", "env-secrets"),
-                    ("namespace", &namespace),
-                ]))?;
-
-                let mut items = vec![];
-                collect_items(&mut items, found.locked, |_| true, true)?;
-                collect_items(&mut items, found.unlocked, |_| true, false)?;
-
-                let locked = items
-                    .iter()
-                    .filter(|(locked, _, _)| *locked)
-                    .map(|(_, _, item)| item)
-                    .collect::<Vec<_>>();
-
-                if !locked.is_empty() {
-                    ss.unlock_all(&locked)?;
-                }
-
                 let exe = env::current_exe()?;
                 let exe = exe
                     .file_name()
                     .ok_or(anyhow::anyhow!("Unable to get executable name"))?;
 
-                for (_, env, item) in &items {
-                    let secret = String::from_utf8(item.get_secret()?)?;
+                let secrets = get_secrets(&ss, &namespace, &|_| true)?;
+
+                for (env, secret) in &secrets {
                     let secret = secret.replace('\'', "'\''");
 
                     println!(
@@ -272,6 +282,46 @@ mod app {
         }
 
         Ok(())
+    }
+
+    fn get_secrets(
+        ss: &SecretService<'_>,
+        namespace: &str,
+        filter: &impl Fn(&String) -> bool,
+    ) -> anyhow::Result<Vec<(String, String)>> {
+        let found = ss.search_items(HashMap::from([
+            ("app", "env-secrets"),
+            ("namespace", &namespace),
+        ]))?;
+
+        let mut items = vec![];
+        collect_items(&mut items, found.locked, filter, true)?;
+        collect_items(&mut items, found.unlocked, filter, false)?;
+
+        let locked = items
+            .iter()
+            .filter(|(locked, _, _)| *locked)
+            .map(|(_, _, item)| item)
+            .collect::<Vec<_>>();
+
+        if !locked.is_empty() {
+            ss.unlock_all(&locked)?;
+        }
+
+        let items = items
+            .into_iter()
+            .map(|(_, key, item)| {
+                item.get_secret()
+                    .with_context(|| format!("Unable to get `{key}` secret."))
+                    .and_then(|s| {
+                        String::from_utf8(s)
+                            .with_context(|| format!("Secret `{key}` is not a utf-8 string."))
+                    })
+                    .map(|secret| (key, secret))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(items)
     }
 
     fn collect_items<'a>(
