@@ -166,7 +166,8 @@ mod app {
             Cmd::Export => {
                 for (key, secret) in &kc {
                     let secret = secret.replace('\'', "'\''");
-                    println!("{exe} -n {namespace} set {key} -v '{secret}'");
+                    let namespace = namespace.replace('\'', "'\''");
+                    println!("{exe} '{namespace}' set \"{key}\" -v '{secret}'");
                 }
             }
         }
@@ -267,16 +268,15 @@ mod app {
                 let exe = exe
                     .file_name()
                     .ok_or(anyhow::anyhow!("Unable to get executable name"))?;
+                let exe = exe.to_string_lossy();
 
                 let secrets = get_secrets(&ss, &namespace, &|_| true)?;
 
                 for (env, secret) in &secrets {
+                    let namespace = namespace.replace('\'', "'\''");
                     let secret = secret.replace('\'', "'\''");
 
-                    println!(
-                        "{exe} -n {namespace} set {env} -v '{secret}'",
-                        exe = exe.to_string_lossy(),
-                    );
+                    println!("{exe} '{namespace}' set {env} -v '{secret}'");
                 }
             }
         }
