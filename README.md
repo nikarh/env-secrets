@@ -1,7 +1,7 @@
 # 🔑 env-secrets
 
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/nikarh/env-secrets#license)
-[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/nikarh/env-secrets/main.yaml)](https://github.com/nikarh/env-secrets/actions/workflows/main.yaml)
+[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/nikarh/env-secrets/main.yml)](https://github.com/nikarh/env-secrets/actions/workflows/main.yml)
 [![Current Release](https://img.shields.io/github/release/nikarh/env-secrets.svg)](https://github.com/nikarh/env-secrets/releases)
 [![Release RSS Feed](https://img.shields.io/badge/rss-releases-ffa500?logo=rss)](https://github.com/nikarh/env-secrets/releases.atom)
 [![Main Commits RSS Feed](https://img.shields.io/badge/rss-commits-ffa500?logo=rss)](https://github.com/nikarh/env-secrets/commits/main.atom)
