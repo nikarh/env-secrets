@@ -291,7 +291,7 @@ mod app {
     ) -> anyhow::Result<Vec<(String, String)>> {
         let found = ss.search_items(HashMap::from([
             ("app", "env-secrets"),
-            ("namespace", &namespace),
+            ("namespace", namespace),
         ]))?;
 
         let mut items = vec![];

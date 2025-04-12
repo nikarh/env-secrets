@@ -11,19 +11,17 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/nikarh/env-secrets.git"
 
 [dependencies]
-anyhow = "1.0.82"
-clap = { version = "4.5.4", features = ["derive"] }
-rpassword = "7.3.1"
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+rpassword = "7"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-secret-service = { version = "3", git = "https://github.com/nikarh/secret-service-rs", rev = "2d7600e6230377f2f527184ea0e8e3e641feb615", features = [
-    "rt-tokio-crypto-rust",
-] }
+secret-service = { version = "5", features = ["rt-tokio-crypto-rust"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-security-framework = { version = "2.10" }
-serde = "1.0.199"
-serde_json = "1.0.116"
+security-framework = { version = "3" }
+serde = "1"
+serde_json = "1"
 
 [lints.clippy]
 pedantic = { level = "deny", priority = -1 }
