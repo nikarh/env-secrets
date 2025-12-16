@@ -70,7 +70,7 @@ fn main() {
 impl App {
     pub fn namespace(&self) -> anyhow::Result<String> {
         Ok(match self.namespace {
-            Some(ref namespace) => namespace.to_string(),
+            Some(ref namespace) => namespace.clone(),
             None => std::env::current_dir()?
                 .file_name()
                 .ok_or(anyhow::anyhow!("Unable to get current directory"))?
