@@ -56,6 +56,37 @@ If the Secret Service is configured in a way that requires manual interactive co
 
 Currently, the only supported platforms are x86_64 or aarch64 Linux, and x86_64 or aarch64 MacOS.
 
+### Linux
+
+On Linux, `env-secrets` talks to the `org.freedesktop.secrets` service on the D-Bus session bus, so a [DBUS Secret Service API] provider has to be running in your session (or be D-Bus activatable).
+If there is none, every command fails with:
+
+```
+Error: zbus error: org.freedesktop.DBus.Error.ServiceUnknown: The name is not activatable
+```
+
+The tool itself is fine in this case: nothing in the session owns `org.freedesktop.secrets`, and D-Bus has no service file to start one on demand.
+This typically happens in window manager sessions (sway, i3, Hyprland, ...) that don't start a keyring daemon, after a keyring package has been removed or replaced, or when the provider (e.g. KeePassXC) simply isn't running.
+
+To diagnose:
+
+```bash
+# Is any provider currently running?
+busctl --user status org.freedesktop.secrets
+# Is there a provider that D-Bus can start on demand?
+ls /usr/share/dbus-1/services/org.freedesktop.secrets.service
+# Is the variable pointing at your session bus? It may be unset under ssh, sudo or some terminal multiplexers.
+echo "$DBUS_SESSION_BUS_ADDRESS"
+```
+
+To fix it, run one provider:
+
+- **gnome-keyring**: install `gnome-keyring` (it ships the D-Bus activation file), then enable it for your user with `systemctl --user enable --now gnome-keyring-daemon.socket`. In window manager sessions, also make sure the session imports its environment into systemd and D-Bus, e.g. `dbus-update-activation-environment --systemd --all` in your sway config.
+- **KeePassXC**: enable *Settings → Secret Service Integration*, and make sure KeePassXC is started on login with the database unlocked. It isn't D-Bus activatable, so it has to be running before `env-secrets` is used.
+- **KWallet** (Plasma 6): enable the Secret Service API with `[org.freedesktop.secrets]` / `apiEnabled=true` in `~/.config/kwalletrc`.
+
+Make sure only one provider is enabled, since they all compete for the same D-Bus name.
+
 ## License
 
 Except where noted (below and/or in individual files), all code in this repository is dual-licensed at your option under either:

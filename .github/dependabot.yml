@@ -5,3 +5,14 @@ updates:
     rebase-strategy: "auto"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+  - package-ecosystem: "cargo"
+    directory: "/"
+    rebase-strategy: "auto"
+    schedule:
+      interval: "weekly"
+    groups:
+      cargo-minor-patch:
+        update-types: ["minor", "patch"]

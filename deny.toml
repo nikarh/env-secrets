@@ -40,6 +40,9 @@ highlight = "simplest-path"
 workspace-default-features = "allow"
 external-default-features = "allow"
 allow-wildcard-paths = true
+skip = [
+    { crate = "syn@2", reason = "proc-macro only; zbus dependencies are still migrating to syn 3" },
+]
 
 [sources]
 unknown-registry = "deny"

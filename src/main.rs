@@ -62,7 +62,7 @@ enum Cmd {
 
 fn main() {
     if let Err(e) = app::run() {
-        eprintln!("Error: {e}");
+        eprintln!("Error: {e:#}");
         std::process::exit(1);
     }
 }
@@ -191,7 +191,11 @@ mod app {
         let app = App::parse();
         let namespace = app.namespace()?;
 
-        let ss = SecretService::connect(secret_service::EncryptionType::Dh)?;
+        let ss = SecretService::connect(secret_service::EncryptionType::Dh).context(
+            "Unable to connect to the Secret Service (org.freedesktop.secrets). \
+             Make sure a provider such as gnome-keyring, KeePassXC or KWallet is running \
+             in your D-Bus session, see https://github.com/nikarh/env-secrets#linux",
+        )?;
         let collection = ss.get_default_collection()?;
 
         match &app.cmd {
@@ -204,7 +208,7 @@ mod app {
                 };
 
                 collection.create_item(
-                    &format!("env-secrets/{namespace}/{key}", key = &set.key),
+                    &format!("env-secrets/{namespace}/{key}", key = set.key),
                     HashMap::from([
                         ("app", "env-secrets"),
                         ("namespace", &namespace),
