@@ -32,7 +32,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           REQUIRED_CHECKS: |
             Check (ubuntu-22.04)
-            Check (macos-14)
+            Check (macos-15)
             Build for x86_64-unknown-linux-gnu
             Build for aarch64-unknown-linux-gnu
             Build for x86_64-unknown-linux-musl
