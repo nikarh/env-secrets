@@ -15,6 +15,10 @@ on:
 env:
   COMMIT: ${{ inputs.commit || github.sha }}
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   create-release:
     runs-on: ubuntu-latest
